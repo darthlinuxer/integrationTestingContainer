@@ -1,14 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.OpenApi;
 using Model;
 using Data;
+using System.ComponentModel.DataAnnotations;
 
 namespace Endpoints;
 
 public static class PersonEndpoint
 {
-    public static void MapPersonEndpoints (this IEndpointRouteBuilder routes)
+    public static void MapPersonEndpoints(this IEndpointRouteBuilder routes)
     {
         var group = routes.MapGroup("/api/Person").WithTags(nameof(Person));
 
@@ -30,13 +30,17 @@ public static class PersonEndpoint
         .WithName("GetPersonById")
         .WithOpenApi();
 
-        group.MapPut("/{id}", async Task<Results<Ok, NotFound>> (int id, Person person, AppDbContext db) =>
+        group.MapPut("/{id}", async Task<Results<Ok, NotFound, BadRequest<List<ValidationResult>>>> (int id, Person person, AppDbContext db) =>
         {
+             if (!person.TryValidate(person, out var validationResults))
+            {
+                return TypedResults.BadRequest(validationResults);
+            }
+
             var affected = await db.Person
                 .Where(model => model.id == id)
                 .ExecuteUpdateAsync(setters => setters
-                    .SetProperty(m => m.id, person.id)
-                    .SetProperty(m => m.Name, person.Name)
+                    .SetProperty(m => m.FirstName, person.FirstName)
                     .SetProperty(m => m.Age, person.Age)
                     );
             return affected == 1 ? TypedResults.Ok() : TypedResults.NotFound();
@@ -44,11 +48,18 @@ public static class PersonEndpoint
         .WithName("UpdatePerson")
         .WithOpenApi();
 
-        group.MapPost("/", async (Person person, AppDbContext db) =>
+        //how to activate data annotation validations here ?
+
+        group.MapPost("/", async Task<Results<Created<Person>, BadRequest<List<ValidationResult>>>> (
+            Person person, AppDbContext db) =>
         {
+            if (!person.TryValidate(person, out var validationResults))
+            {
+                return TypedResults.BadRequest(validationResults);
+            }
             db.Person.Add(person);
             await db.SaveChangesAsync();
-            return TypedResults.Created($"/api/Person/{person.id}",person);
+            return TypedResults.Created($"/api/Person/{person.id}", person);
         })
         .WithName("CreatePerson")
         .WithOpenApi();
