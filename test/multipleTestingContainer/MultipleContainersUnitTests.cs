@@ -1,7 +1,7 @@
-namespace singleContainer;
+namespace multipleContainers;
 
 [TestClass]
-public class UnitTest1
+public class MultipleContainersUnitTests
 {
     [TestMethod]
     public void TestMethod1()
