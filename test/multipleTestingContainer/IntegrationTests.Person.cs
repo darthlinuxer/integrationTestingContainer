@@ -6,24 +6,20 @@ public class PersonTests
     private CustomWebApplicationFactory? _factory;
     private IContainer _container;
     private HttpClient? _client;
-    private INetwork _network;
     public PersonTests()
     {
-         _network = new NetworkBuilder()
-            .WithName("mysqlcontainer_net")
-            .WithCleanUp(true)
-            .Build();
-
         _container = new ContainerBuilder()
-            .WithNetwork(_network)
-            .WithImage("mysql:latest")
-            .WithPortBinding(8080, true)
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(_ => _.ForPort(8080)))
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilContainerIsHealthy())
-            .WithAutoRemove(true)
-            .WithCleanUp(true)
-            .Build();
-
+             .WithImage("mysql:latest")
+             .WithExposedPort(3306)
+             .WithPortBinding(3306, true)
+             .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(_ => _.ForPort(3306)))
+             .WithCleanUp(true)
+             .WithAutoRemove(true)
+             .WithHostname("mysqlcontainer")
+             .WithName("mysqlcontainer")
+             .WithEnvironment("MYSQL_ROOT_PASSWORD", "123456")
+             .WithEnvironment("MYSQL_DATABASE", "test")
+             .Build();
     }
 
     [TestInitialize]
@@ -32,7 +28,7 @@ public class PersonTests
         // Start the container.
         await _container.StartAsync().ConfigureAwait(false);
 
-        _factory = new CustomWebApplicationFactory();
+        _factory = new CustomWebApplicationFactory(_container);
         _client = _factory.CreateClient();
     }
 
@@ -41,7 +37,10 @@ public class PersonTests
     [DataRow(121)]
     public async Task CreatePerson_ReturnsBadRequest_WhenAgeIsInvalid(int age)
     {
-        var result = await _client!.PostAsJsonAsync<Person>("/api/person",
+        // Construct the request URI by specifying the scheme, hostname, assigned random host port, and the endpoint "uuid".
+        var requestUri = new UriBuilder(Uri.UriSchemeHttp, _container.Hostname, _container.GetMappedPublicPort(3306), "/api/person").Uri;
+
+        var result = await _client!.PostAsJsonAsync<Person>(requestUri,
         new Person
         {
             FirstName = "Camilo",
@@ -61,7 +60,9 @@ public class PersonTests
         string email,
         int age)
     {
-        var result = await _client!.PostAsJsonAsync<Person>("/api/person",
+        // Construct the request URI by specifying the scheme, hostname, assigned random host port, and the endpoint "uuid".
+        var requestUri = new UriBuilder(Uri.UriSchemeHttp, _container.Hostname, _container.GetMappedPublicPort(3306), "/api/person").Uri;
+        var result = await _client!.PostAsJsonAsync<Person>(requestUri,
         new Person
         {
             FirstName = firstName,
@@ -77,7 +78,9 @@ public class PersonTests
     [DataRow("camilo.chaves@gmail")]
     public async Task CreatePerson_ReturnsBadRequest_WhenEmailIsInvalid(string email)
     {
-        var result = await _client!.PostAsJsonAsync<Person>("/api/person",
+        // Construct the request URI by specifying the scheme, hostname, assigned random host port, and the endpoint "uuid".
+        var requestUri = new UriBuilder(Uri.UriSchemeHttp, _container.Hostname, _container.GetMappedPublicPort(3306), "/api/person").Uri;
+        var result = await _client!.PostAsJsonAsync<Person>(requestUri,
         new Person
         {
             FirstName = "Camilo",

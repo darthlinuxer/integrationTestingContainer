@@ -20,6 +20,8 @@ public class ExampleUnitTest
       // Wait until the HTTP endpoint of the container is available.
       .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(r => r.ForPort(8080)))
       // Build the container configuration.
+      .WithAutoRemove(true)
+      .WithCleanUp(true)
       .Build();
 
 

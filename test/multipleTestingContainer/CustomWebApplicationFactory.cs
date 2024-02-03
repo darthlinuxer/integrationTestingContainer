@@ -2,6 +2,11 @@ namespace multipleContainers;
 
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyncDisposable
 {
+    private IContainer container;
+    public CustomWebApplicationFactory(IContainer container)
+    {
+        this.container = container;
+    }
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureTestServices(services =>
@@ -13,7 +18,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             }
             services.AddPooledDbContextFactory<AppDbContext>(options =>
             {
-                var connectionString = $"server=mysqlcontainer;user=root;password=root;database=test";
+                var connectionString = $"server={container.Hostname};port={container.GetMappedPublicPort(3306)};user=root;password=123456;database=test";
                 options.UseMySql(
                     connectionString, // Connection string
                     new MySqlServerVersion(new Version(8, 0, 21)), // MySQL server version
