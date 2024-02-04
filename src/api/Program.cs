@@ -7,12 +7,17 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-        builder.Services.AddPooledDbContextFactory<AppDbContext>(options =>
-            options.UseSqlite(builder.Configuration.GetConnectionString("AppDbContext") ?? throw new InvalidOperationException("Connection string 'AppDbContext' not found.")));
-        
-        builder.Services.AddScoped(implementationFactory: sp => sp
-            .GetRequiredService<IDbContextFactory<AppDbContext>>()
-            .CreateDbContext());
+        // builder.Services.AddPooledDbContextFactory<AppDbContext>(options =>
+        //     options.UseSqlite(builder.Configuration.GetConnectionString("AppDbContext") ?? throw new InvalidOperationException("Connection string 'AppDbContext' not found.")));
+
+        // builder.Services.AddScoped(implementationFactory: sp => sp
+        //     .GetRequiredService<IDbContextFactory<AppDbContext>>()
+        //     .CreateDbContext());
+
+        builder.Services.AddDbContext<AppDbContext>(options =>
+            options.UseSqlite(builder.Configuration.GetConnectionString("AppDbContext") ?? 
+            throw new InvalidOperationException("Connection string 'AppDbContext' not found."))
+        );
 
         // Add services to the container.
         builder.Services.AddEndpointsApiExplorer();

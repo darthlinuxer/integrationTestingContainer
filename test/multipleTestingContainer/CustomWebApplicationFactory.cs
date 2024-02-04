@@ -1,3 +1,6 @@
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+
 namespace multipleContainers;
 
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyncDisposable
@@ -9,25 +12,32 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
     }
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.ConfigureTestServices(services =>
+        try
         {
-            var descriptor = services.SingleOrDefault(c => c.ServiceType == typeof(DbContextPool<AppDbContext>));
-            if (descriptor is not null)
+            builder.ConfigureTestServices(services =>
             {
-                services.Remove(descriptor);
-            }
-            services.AddPooledDbContextFactory<AppDbContext>(options =>
-            {
-                var connectionString = $"server={container.Hostname};port={container.GetMappedPublicPort(3306)};user=root;password=123456;database=test";
-                options.UseMySql(
-                    connectionString, // Connection string
-                    new MySqlServerVersion(new Version(8, 0, 21)), // MySQL server version
-                    mySqlOptions => mySqlOptions.MigrationsAssembly("example.api"));
-            });
+                // Find the original AppDbContext registration.
+                services.RemoveAll<IDbContextFactory<AppDbContext>>();
+                services.RemoveAll<AppDbContext>();
+                services.RemoveAll<DbContext>();
 
-            using var scope = services.BuildServiceProvider().CreateScope();
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            dbContext.Database.Migrate();
-        });
+                services.AddDbContext<AppDbContext>(options =>
+                {
+                    var connectionString = $"server={container.Hostname};port={container.GetMappedPublicPort(3306)};user=root;password=123456;database=test";
+                    options.UseMySql(
+                        connectionString, // Connection string
+                        new MySqlServerVersion(new Version(8, 0, 21)), // MySQL server version
+                        mySqlOptions => mySqlOptions.MigrationsAssembly("example.api"));
+                });
+
+                using var scope = services.BuildServiceProvider().CreateScope();
+                var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                dbContext.Database.Migrate();
+            });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
     }
 }

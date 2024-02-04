@@ -10,13 +10,10 @@ public class PersonTests
     {
         _container = new ContainerBuilder()
              .WithImage("mysql:latest")
-             .WithExposedPort(3306)
              .WithPortBinding(3306, true)
-             .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(_ => _.ForPort(3306)))
+             .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(3306))
              .WithCleanUp(true)
              .WithAutoRemove(true)
-             .WithHostname("mysqlcontainer")
-             .WithName("mysqlcontainer")
              .WithEnvironment("MYSQL_ROOT_PASSWORD", "123456")
              .WithEnvironment("MYSQL_DATABASE", "test")
              .Build();
@@ -37,10 +34,7 @@ public class PersonTests
     [DataRow(121)]
     public async Task CreatePerson_ReturnsBadRequest_WhenAgeIsInvalid(int age)
     {
-        // Construct the request URI by specifying the scheme, hostname, assigned random host port, and the endpoint "uuid".
-        var requestUri = new UriBuilder(Uri.UriSchemeHttp, _container.Hostname, _container.GetMappedPublicPort(3306), "/api/person").Uri;
-
-        var result = await _client!.PostAsJsonAsync<Person>(requestUri,
+        var result = await _client!.PostAsJsonAsync<Person>("api/person",
         new Person
         {
             FirstName = "Camilo",
@@ -60,9 +54,7 @@ public class PersonTests
         string email,
         int age)
     {
-        // Construct the request URI by specifying the scheme, hostname, assigned random host port, and the endpoint "uuid".
-        var requestUri = new UriBuilder(Uri.UriSchemeHttp, _container.Hostname, _container.GetMappedPublicPort(3306), "/api/person").Uri;
-        var result = await _client!.PostAsJsonAsync<Person>(requestUri,
+        var result = await _client!.PostAsJsonAsync<Person>("api/person",
         new Person
         {
             FirstName = firstName,
@@ -78,9 +70,7 @@ public class PersonTests
     [DataRow("camilo.chaves@gmail")]
     public async Task CreatePerson_ReturnsBadRequest_WhenEmailIsInvalid(string email)
     {
-        // Construct the request URI by specifying the scheme, hostname, assigned random host port, and the endpoint "uuid".
-        var requestUri = new UriBuilder(Uri.UriSchemeHttp, _container.Hostname, _container.GetMappedPublicPort(3306), "/api/person").Uri;
-        var result = await _client!.PostAsJsonAsync<Person>(requestUri,
+        var result = await _client!.PostAsJsonAsync<Person>("api/person",
         new Person
         {
             FirstName = "Camilo",
