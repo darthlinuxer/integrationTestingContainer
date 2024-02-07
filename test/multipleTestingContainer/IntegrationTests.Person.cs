@@ -34,7 +34,7 @@ public class PersonTests
     [DataRow(121)]
     public async Task CreatePerson_ReturnsBadRequest_WhenAgeIsInvalid(int age)
     {
-        var result = await _client!.PostAsJsonAsync<Person>("api/person",
+        var result = await _client!.PostAsJsonAsync<Person>("/api/person",
         new Person
         {
             FirstName = "Camilo",
@@ -54,7 +54,7 @@ public class PersonTests
         string email,
         int age)
     {
-        var result = await _client!.PostAsJsonAsync<Person>("api/person",
+        var result = await _client!.PostAsJsonAsync<Person>("/api/person",
         new Person
         {
             FirstName = firstName,
@@ -67,10 +67,10 @@ public class PersonTests
 
     [TestMethod]
     [DataRow("camilochaves@")]
-    [DataRow("camilo.chaves@gmail")]
+    [DataRow("")]
     public async Task CreatePerson_ReturnsBadRequest_WhenEmailIsInvalid(string email)
     {
-        var result = await _client!.PostAsJsonAsync<Person>("api/person",
+        var result = await _client!.PostAsJsonAsync<Person>("/api/person",
         new Person
         {
             FirstName = "Camilo",

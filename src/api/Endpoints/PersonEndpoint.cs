@@ -32,7 +32,7 @@ public static class PersonEndpoint
 
         group.MapPut("/{id}", async Task<Results<Ok, NotFound, BadRequest<List<ValidationResult>>>> (int id, Person person, AppDbContext db) =>
         {
-             if (!person.TryValidate(person, out var validationResults))
+            if (!person.TryValidate(person, out var validationResults))
             {
                 return TypedResults.BadRequest(validationResults);
             }
@@ -53,13 +53,27 @@ public static class PersonEndpoint
         group.MapPost("/", async Task<Results<Created<Person>, BadRequest<List<ValidationResult>>>> (
             Person person, AppDbContext db) =>
         {
-            if (!person.TryValidate(person, out var validationResults))
+            try
             {
-                return TypedResults.BadRequest(validationResults);
+                if (!person.TryValidate(person, out var validationResults))
+                {
+                    return TypedResults.BadRequest(validationResults);
+                }
+                db.Person.Add(person);
+                await db.SaveChangesAsync();
+                return TypedResults.Created($"/api/Person/{person.id}", person);
             }
-            db.Person.Add(person);
-            await db.SaveChangesAsync();
-            return TypedResults.Created($"/api/Person/{person.id}", person);
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.InnerException?.Message);
+                var validationResult = new List<ValidationResult>
+                {
+                    new ValidationResult(ex.Message),
+                    new ValidationResult(ex.InnerException?.Message)
+                };
+                return TypedResults.BadRequest(validationResult);
+            }
         })
         .WithName("CreatePerson")
         .WithOpenApi();

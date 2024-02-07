@@ -8,7 +8,7 @@ public class Person
     [Key]
     [Required]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int id {get; set;} = 0;
+    public int id {get; set;} = 1;
     
     [Required]
     [StringLength(50, MinimumLength = 2, ErrorMessage = "Firstname must be between 2 and 50 characters")]
