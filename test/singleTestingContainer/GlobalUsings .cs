@@ -1,0 +1,12 @@
+global using Microsoft.VisualStudio.TestTools.UnitTesting;
+global using Data;
+global using DotNet.Testcontainers.Builders;
+global using Microsoft.AspNetCore.Hosting;
+global using Microsoft.AspNetCore.Mvc.Testing;
+global using Microsoft.AspNetCore.TestHost;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.Extensions.DependencyInjection;
+global using DotNet.Testcontainers.Containers;
+global using System.Net.Http.Json;
+global using Model;
+global using System.Net.Http.Headers;
