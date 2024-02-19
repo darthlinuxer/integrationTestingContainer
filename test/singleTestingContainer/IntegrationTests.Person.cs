@@ -1,3 +1,5 @@
+using MySqlConnector;
+
 namespace singleContainer;
 
 [TestClass]
@@ -23,6 +25,16 @@ public class PersonTests
 
         _factory = new CustomWebApplicationFactory(_container);
         _client = _factory.CreateClient();
+    }
+
+    [TestInitialize]
+    public async Task TestInitialization()
+    {
+        var connectionString = $"server={_container.Hostname};port={_container.GetMappedPublicPort(3306)};user=root;password=123456;database=test;";
+        using var connection = new MySqlConnection(connectionString);
+        await connection.OpenAsync();
+        using var command = new MySqlCommand($"TRUNCATE TABLE Person;", connection);
+        await command.ExecuteNonQueryAsync();
     }
 
     [TestMethod]
